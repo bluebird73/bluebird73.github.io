@@ -1,0 +1,17 @@
+{
+ "generated_at": "2026-09-10 12:19:31",
+ "docs": 458,
+ "chunks": 2132,
+ "index_terms": 101420,
+ "category_dist": {
+  "annual_report": 680,
+  "audit_report": 338,
+  "other": 45,
+  "policy": 12,
+  "news": 1048,
+  "project_intro": 9
+ },
+ "security_hits": 0,
+ "security_hits_detail": [],
+ "doc_families": 457
+}

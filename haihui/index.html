@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>四川海惠知识库 · 技术验证版</title>
+<style>
+  :root {
+    --bg: #F4F3EE;
+    --card: #FFFFFF;
+    --border: #E4E3DD;
+    --text: #1A1B1C;
+    --text2: #6B7280;
+    --accent: #9BBBF4;
+    --accent-deep: #4A6FBF;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: 'PingFang SC', 'Microsoft YaHei', 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  .wrap { max-width: 860px; margin: 0 auto; padding: 20px 16px 60px; }
+  header { text-align: center; padding: 28px 0 12px; }
+  .badge {
+    display: inline-block; font-size: 12px; color: #fff; background: var(--accent-deep);
+    padding: 3px 12px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px;
+  }
+  h1 { font-size: 26px; font-weight: 700; }
+  .sub { color: var(--text2); font-size: 14px; margin-top: 6px; }
+  .notice {
+    margin: 16px auto; max-width: 640px; background: #FFF8E6; border: 1px solid #F0E0B0;
+    border-radius: 10px; padding: 10px 14px; font-size: 13px; color: #7A5C00;
+  }
+  .searchbox {
+    display: flex; gap: 10px; margin: 22px auto 8px; max-width: 680px;
+  }
+  .searchbox input {
+    flex: 1; padding: 14px 16px; font-size: 16px; border: 2px solid var(--border);
+    border-radius: 12px; background: var(--card); outline: none; min-width: 0;
+  }
+  .searchbox input:focus { border-color: var(--accent-deep); }
+  .searchbox button {
+    padding: 14px 24px; font-size: 16px; font-weight: 600; color: #fff;
+    background: var(--accent-deep); border: none; border-radius: 12px; cursor: pointer;
+    white-space: nowrap;
+  }
+  .searchbox button:active { opacity: .85; }
+  .suggest { max-width: 680px; margin: 6px auto 0; font-size: 12px; color: var(--text2); }
+  .chips {
+    max-width: 680px; margin: 16px auto 0; display: flex; flex-wrap: wrap; gap: 8px;
+  }
+  .chip {
+    background: var(--card); border: 1px solid var(--border); border-radius: 18px;
+    padding: 7px 14px; font-size: 13px; cursor: pointer; color: var(--text);
+    transition: border-color .15s, background .15s;
+  }
+  .chip:hover { border-color: var(--accent-deep); background: #EEF3FC; }
+  .stats {
+    max-width: 680px; margin: 14px auto 4px; font-size: 12px; color: var(--text2);
+    text-align: center;
+  }
+  #results { margin-top: 20px; }
+  .result {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 16px 18px; margin-bottom: 14px;
+  }
+  .result .rtitle { font-size: 16px; font-weight: 600; color: var(--accent-deep); }
+  .result .rmeta { font-size: 12px; color: var(--text2); margin: 4px 0 8px; }
+  .result .rtext {
+    font-size: 14px; color: var(--text); background: #F9F8F4;
+    border-radius: 8px; padding: 10px 12px; max-height: 150px; overflow: hidden;
+    position: relative; white-space: pre-wrap; word-break: break-word;
+  }
+  .result .rtext.collapsed { -webkit-line-clamp: 5; line-clamp: 5; display: -webkit-box; -webkit-box-orient: vertical; }
+  .result .rsrc { margin-top: 10px; font-size: 12px; color: var(--text2); word-break: break-all; }
+  .result .rsrc a { color: var(--accent-deep); }
+  .variant-note { font-size: 12px; color: #8A6D1A; margin-top: 6px; }
+  .empty { text-align: center; color: var(--text2); padding: 40px 0; font-size: 14px; }
+  .loading { text-align: center; color: var(--text2); padding: 30px 0; font-size: 14px; }
+  footer { text-align: center; color: var(--text2); font-size: 12px; margin-top: 36px; }
+  @media (max-width: 480px) {
+    h1 { font-size: 21px; }
+    .searchbox { flex-direction: column; }
+    .searchbox button { width: 100%; }
+    .result .rtext { max-height: 180px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <span class="badge">技术验证版</span>
+    <h1>四川海惠知识库</h1>
+    <div class="sub">Haihui Knowledge Base · Public Search Demo</div>
+  </header>
+  <div class="notice">⚠️ 当前仅基于四川海惠公开资料构建，不代表机构完整内部知识库。所有结果均来自可追溯的公开来源。</div>
+  <div class="searchbox">
+    <input id="q" type="text" placeholder="输入问题或搜索内容，如：凉山州、养殖、2023 年活动…" autocomplete="off">
+    <button id="btn">搜索</button>
+  </div>
+  <div class="suggest">支持：地区 / 年份 / 项目主题 / 合作机构 / 报告名称 / 关键词</div>
+  <div class="chips" id="chips"></div>
+  <div class="stats" id="stats"></div>
+  <div id="results"></div>
+  <footer>
+    四川海惠知识库 · Seed V1 Gate 5A · 数据来源：四川海惠官网公开资料（www.chuanhaihui.org.cn）<br>
+    检索为本地静态索引演示，结果可追溯至原始网页 / PDF 页码。
+  </footer>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var DB = null;
+  var QUESTIONS = [];
+  var $ = function (id) { return document.getElementById(id); };
+
+  function loadJson(url) {
+    return fetch(url).then(function (r) {
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      return r.json();
+    });
+  }
+
+  function tokenize(text) {
+    if (!text) return [];
+    var tokens = [];
+    var m;
+    var reEn = /[A-Za-z0-9_]+/g;
+    while ((m = reEn.exec(text)) !== null) tokens.push(m.group ? m[0] : m[0]);
+    var cjk = text.match(/[\u4e00-\u9fff]/g) || [];
+    for (var i = 0; i < cjk.length; i++) {
+      tokens.push(cjk[i]);
+      if (i + 1 < cjk.length) tokens.push(cjk[i] + cjk[i + 1]);
+    }
+    return tokens;
+  }
+
+  // 归一化：小写 + 去空白
+  function norm(s) { return (s || '').toLowerCase().replace(/\s+/g, ''); }
+
+  // 主检索：分词 → 倒排取交集 → 打分（term 覆盖率 + BM25 简化）
+  function search(query, topK) {
+    if (!DB) return [];
+    var toks = tokenize(query);
+    // 去重 + 过滤长度<1
+    var seen = {}, uniq = [];
+    for (var i = 0; i < toks.length; i++) {
+      var t = toks[i];
+      if (!seen[t]) { seen[t] = 1; uniq.push(t); }
+    }
+    if (!uniq.length) return [];
+
+    var terms = DB.terms, offsets = DB.offsets, postings = DB.postings;
+    var termIdx = {};
+    for (var ti = 0; ti < terms.length; ti++) termIdx[terms[ti]] = ti;
+
+    // 收集每个词命中的 chunk 集合
+    var hits = {};      // chunkIdx -> { matched: Set, score }
+    var qn = norm(query);
+    for (var k = 0; k < uniq.length; k++) {
+      var w = uniq[k];
+      var idx = termIdx[w];
+      if (idx === undefined) continue;
+      var start = offsets[idx], end = offsets[idx + 1];
+      for (var p = start; p < end; p++) {
+        var ci = postings[p];
+        if (!hits[ci]) {
+          hits[ci] = { matched: {}, score: 0, exactBonus: 0 };
+        }
+        hits[ci].matched[w] = 1;
+      }
+    }
+    var matchedKeys = Object.keys(hits).length;
+    if (!matchedKeys) return [];
+
+    // 打分
+    var out = [];
+    var chunks = DB.chunks;
+    var totalLen = 0;
+    for (var cj = 0; cj < chunks.length; cj++) totalLen += (chunks[cj].text || '').length;
+    var avgdl = totalLen / Math.max(1, chunks.length);
+
+    for (var ck in hits) {
+      var h = hits[ck];
+      var cn = norm(chunks[ck].text);
+      var dl = Math.max(1, cn.length);
+      var matchedCount = Object.keys(h.matched).length;
+      // 覆盖率：命中词数 / 查询词数
+      var cover = matchedCount / uniq.length;
+      // BM25 简化（tf 用命中数，idf 固定）
+      var tf = matchedCount;
+      var bm = tf * (1.2 + 1) / (tf + 1.2 * (1 - 0.75 + 0.75 * dl / avgdl));
+      var score = cover * 3.0 + bm * 0.8;
+      // 查询词在文本中出现的精确度加成
+      var qnCount = 0;
+      var qnNorm = norm(query);
+      if (qnNorm && cn.indexOf(qnNorm) >= 0) score += 5.0;
+      // 标题匹配加成
+      var titleNorm = norm(chunks[ck].title);
+      if (titleNorm && qnNorm && titleNorm.indexOf(qnNorm) >= 0) score += 3.0;
+      // 页面前部权重
+      score += Math.max(0, 1 - (chunks[ck].page || 1) * 0.01);
+      out.push({ idx: ck, score: score, matched: matchedCount, cover: cover });
+    }
+    out.sort(function (a, b) { return b.score - a.score; });
+    return out.slice(0, topK || 10);
+  }
+
+  function renderResults(results, query) {
+    var box = $('results');
+    if (!results.length) {
+      box.innerHTML = '<div class="empty">未找到匹配内容。可尝试：凉山州 / 养殖 / 2023 年 / 审计报告 / 合作机构</div>';
+      return;
+    }
+    // Document Family 聚合：同一 canonical 只保留最高分一条，返回 canonical document；
+    // 命中的若是 variant，则展示 canonical 标题/来源，并标注"另有 N 个版本/扫描件"。
+    var canonicalBest = {};   // canonical -> {score, chunk, variants: []}
+    var variantsSeen = {};
+    for (var i = 0; i < results.length; i++) {
+      var c = DB.chunks[results[i].idx];
+      var canon = c.canonical || c.doc;
+      if (!canonicalBest[canon] || results[i].score > canonicalBest[canon].score) {
+        canonicalBest[canon] = { score: results[i].score, chunk: c, variants: [] };
+      }
+      if (c.doc !== canon && !variantsSeen[c.doc]) {
+        variantsSeen[c.doc] = 1;
+        canonicalBest[canon].variants.push(c);
+      }
+    }
+    var html = '';
+    var keys = Object.keys(canonicalBest).sort(function (a, b) {
+      return canonicalBest[b].score - canonicalBest[a].score;
+    });
+    var collapsedTotal = 0;
+    for (var j = 0; j < keys.length; j++) {
+      var entry = canonicalBest[keys[j]];
+      var c = entry.chunk;
+      var variantCount = entry.variants.length;
+      var variantNames = [];
+      entry.variants.forEach(function (v) { variantNames.push(esc(v.src_file || v.doc)); });
+      html += renderOne(c, entry.score, j, variantCount, variantNames);
+      collapsedTotal += variantCount;
+    }
+    if (collapsedTotal > 0) {
+      html += '<div class="variant-note">已按 Document Family 折叠同一资料的其他版本 ' + collapsedTotal + ' 条（返回 canonical 文档）。</div>';
+    }
+    box.innerHTML = html;
+  }
+
+  function renderOne(c, score, rank, variantCount, variantNames) {
+    // 展示层使用 canonical document 的标题与来源（若当前 chunk 是 variant）
+    var dispTitle = c.is_variant && c.canonical_title ? c.canonical_title : (c.title || '');
+    var dispFile = c.is_variant && c.canonical_src_file ? c.canonical_src_file : (c.src_file || '');
+    var dispUrl = c.is_variant && c.canonical_src_url ? c.canonical_src_url : (c.src_url || '');
+    var meta = [];
+    if (c.date) meta.push(c.date);
+    if (c.category) meta.push(catName(c.category));
+    if (c.page) meta.push('第 ' + c.page + ' 页');
+    var srcFile = esc(dispFile || '');
+    var srcUrl = dispUrl ? esc(dispUrl) : '';
+    var title = esc(dispTitle || '(无标题)');
+    var text = esc(c.text || '');
+    var srcHtml = '';
+    if (srcUrl) {
+      srcHtml = '<a href="' + srcUrl + '" target="_blank" rel="noopener">查看官网原文</a>';
+    }
+    var variantNote = '';
+    if (variantCount > 0 && variantNames && variantNames.length) {
+      variantNote = '<div class="variant-note">另有 ' + variantCount + ' 个版本/扫描件：' + variantNames.join('、') + '（已折叠）</div>';
+    }
+    return '<div class="result">' +
+      '<div class="rtitle">' + (rank + 1) + '. ' + title + '</div>' +
+      '<div class="rmeta">' + meta.join(' · ') + '</div>' +
+      '<div class="rtext collapsed">' + text + '</div>' +
+      '<div class="rsrc">来源：' + srcFile + (srcUrl ? ' · ' + srcHtml : '') + '</div>' +
+      variantNote +
+      '</div>';
+  }
+
+  function catName(c) {
+    var map = {
+      news: '新闻', annual_report: '年报', audit_report: '审计报告',
+      project_intro: '项目介绍', yearly_inspection: '年检', policy: '政策', other: '其他'
+    };
+    return map[c] || c;
+  }
+
+  function esc(s) {
+    return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;');
+  }
+
+  function runSearch() {
+    var q = ($('q').value || '').trim();
+    if (!q) return;
+    var box = $('results');
+    box.innerHTML = '<div class="loading">正在检索…</div>';
+    setTimeout(function () {
+      var res = search(q, 10);
+      $('stats').textContent = '检索词命中 ' + (DB ? DB.chunks.length : 0) + ' 条记录，显示前 ' + Math.min(res.length, 10) + ' 条';
+      renderResults(res, q);
+    }, 30);
+  }
+
+  // 初始化
+  $('btn').addEventListener('click', runSearch);
+  $('q').addEventListener('keydown', function (e) { if (e.key === 'Enter') runSearch(); });
+
+  Promise.all([
+    loadJson('assets/search_index.json'),
+    loadJson('assets/demo_questions.json')
+  ]).then(function (arr) {
+    DB = arr[0];
+    QUESTIONS = arr[1].questions || [];
+    var chips = $('chips');
+    var html = '';
+    QUESTIONS.forEach(function (item, i) {
+      html += '<button class="chip" data-i="' + i + '">' + esc(item.q) + '</button>';
+    });
+    chips.innerHTML = html;
+    $('stats').textContent = '已加载公开资料 ' + DB.chunks.length + ' 条记录 · ' +
+      (QUESTIONS.length) + ' 个示范问题';
+    chips.addEventListener('click', function (e) {
+      var btn = e.target.closest('.chip');
+      if (!btn) return;
+      var item = QUESTIONS[parseInt(btn.getAttribute('data-i'), 10)];
+      $('q').value = item.q;
+      runSearch();
+    });
+  }).catch(function (err) {
+    $('results').innerHTML = '<div class="empty">资源加载失败：' + esc(err.message) +
+      '<br>请确认 assets/search_index.json 与 assets/demo_questions.json 存在。</div>';
+  });
+})();
+</script>
+</body>
+</html>
