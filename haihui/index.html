@@ -215,15 +215,25 @@
       box.innerHTML = '<div class="empty">未找到匹配内容。可尝试：凉山州 / 养殖 / 2023 年 / 审计报告 / 合作机构</div>';
       return;
     }
-    // Document Family 聚合：同一 canonical 只保留最高分一条，返回 canonical document；
-    // 命中的若是 variant，则展示 canonical 标题/来源，并标注"另有 N 个版本/扫描件"。
+    // Document Family 聚合：同一 canonical 只保留一条代表结果；
+    // canonical chunk 存在时优先选 canonical（返回 canonical document），
+    // 仅当 family 中只有 variant 命中时才以 variant 为代表并展示 canonical 标题/来源；
+    // variant 一律折叠计数，不得独立占据 Top-K。
     var canonicalBest = {};   // canonical -> {score, chunk, variants: []}
     var variantsSeen = {};
     for (var i = 0; i < results.length; i++) {
       var c = DB.chunks[results[i].idx];
       var canon = c.canonical || c.doc;
-      if (!canonicalBest[canon] || results[i].score > canonicalBest[canon].score) {
+      if (!canonicalBest[canon]) {
         canonicalBest[canon] = { score: results[i].score, chunk: c, variants: [] };
+      } else {
+        var cur = canonicalBest[canon].chunk;
+        var curIsCanon = cur.doc === canon;
+        var newIsCanon = c.doc === canon;
+        // canonical 优先；同为 canonical 或同为 variant 时取高分
+        if ((newIsCanon && !curIsCanon) || (newIsCanon === curIsCanon && results[i].score > canonicalBest[canon].score)) {
+          canonicalBest[canon] = { score: results[i].score, chunk: c, variants: canonicalBest[canon].variants };
+        }
       }
       if (c.doc !== canon && !variantsSeen[c.doc]) {
         variantsSeen[c.doc] = 1;
